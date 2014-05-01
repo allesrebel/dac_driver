@@ -44,7 +44,7 @@ volatile unsigned int state = 0;
 volatile unsigned int sin_pos = 0;
 volatile unsigned int current_freq = 0;
 volatile unsigned int sqaure_val = 0;
-volatile unsigned int TempDAC_Value = 0;
+volatile unsigned int saw_val = 0;
 volatile unsigned int sampledCycles[5] = { 1600, 800, 533, 400, 320 };
 //First half of sine wave (only 50 samples for first half of period)
 volatile unsigned int sine1[50] = { 1024, 1088, 1152, 1215, 1278, 1340, 1400,
@@ -178,22 +178,31 @@ __interrupt void Timer_A(void) {
 		Drive_DAC(sqaure_val);
 		break;
 	case 1:
-		if (sin_pos + 1 > 49){
+		if (sin_pos + 1 > 49) {
 			sin_pos = 0;	//reset so we can draw other half
 			count ^= 1;		//toggle which part we want to draw
-		}
-		else
+		} else
 			sin_pos++;
 
 		//do first half of sine wave
-		if(count > 0 )
+		if (count > 0)
 			Drive_DAC(sine1[sin_pos]);
 		else
 			Drive_DAC(sine2[sin_pos]);
 		break;
 	case 2:
 		//sawtooth
+		//This is a sqaure wave state
+		if (count % 100 == 0) {
+			saw_val = 0;
+			count = 0;
+		} else{
+			saw_val += 20;
+		}
+		count++;
 
+		//send the saw value to the DAC
+		Drive_DAC(saw_val);
 		break;
 	}
 }
