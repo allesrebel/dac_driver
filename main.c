@@ -19,7 +19,7 @@ void incrementState();
 //USCI General Port Info
 #define USCIPS1	P1SEL	//USCI Pin mode select
 #define USCIPS2	P1SEL2	//USCI Pin mode select 2
-//UCA0 PORT Defs
+//UCA0 PORT Defs		-------NOT USED UCB is in USE -------
 #define UCASOMI	BIT1	//isn't really used to communicate with DAC
 #define UCASIMO	BIT2
 #define UCACLK	BIT4
@@ -28,6 +28,12 @@ void incrementState();
 #define UCBSOMI	BIT6	//isn't really used to communicate with DAC
 #define UCBSIMO	BIT7
 #define UCBCLK	BIT5
+
+/*
+ * Button config
+ */
+#define B0	BIT3
+#define B1	BIT2
 
 /*
  * Constants and Variables
@@ -40,11 +46,17 @@ volatile unsigned int current_freq = 0;
 volatile unsigned int sqaure_val = 0;
 volatile unsigned int TempDAC_Value = 0;
 volatile unsigned int sampledCycles[5] = { 1600, 800, 533, 400, 320 };
-volatile unsigned int SIN_Values[50] = { 1024, 1152, 1278, 1400, 1517, 1625,
-		1724, 1813, 1888, 1950, 1997, 2029, 2045, 2045, 2029, 1997, 1950, 1888,
-		1813, 1724, 1625, 1517, 1400, 1278, 1152, 1024, 895, 769, 647, 530, 422,
-		323, 234, 159, 97, 50, 18, 2, 2, 18, 50, 97, 159, 234, 323, 422, 530,
-		647, 769, 895 }; // Sin values rounded to nearest int.
+//First half of sine wave (only 50 samples for first half of period)
+volatile unsigned int sine1[50] = { 1024, 1088, 1152, 1215, 1278, 1340, 1400,
+		1459, 1517, 1572, 1625, 1676, 1724, 1770, 1813, 1852, 1888, 1921, 1950,
+		1976, 1997, 2015, 2029, 2039, 2045, 2048, 2045, 2039, 2029, 2015, 1997,
+		1976, 1950, 1921, 1888, 1852, 1813, 1770, 1724, 1676, 1625, 1572, 1517,
+		1459, 1400, 1340, 1278, 1215, 1152, 1088 };
+//second half of sine wave (only 50 samples for second half of period)
+volatile unsigned int sine2[50] = { 1024, 959, 895, 832, 769, 707, 647, 588,
+		530, 475, 422, 371, 323, 277, 234, 195, 159, 126, 97, 71, 50, 32, 18, 8,
+		2, 0, 2, 8, 18, 32, 50, 71, 97, 126, 159, 195, 234, 277, 323, 371, 422,
+		475, 530, 588, 647, 707, 769, 832, 895, 959 };
 
 int main(void) {
 	WDTCTL = WDTPW | WDTHOLD;	// Stop watchdog timer
@@ -59,11 +71,11 @@ int main(void) {
 	BCSCTL1 = CALBC1_16MHZ;	// Set range
 	DCOCTL = CALDCO_16MHZ;	// Set DCO step + modulation
 
-	//Initialize Sin values
-	P1DIR &= ~BIT3;
-	P1IE |= BIT3;                   // interrupts enabled on port 3
-	P1IES |= BIT3;
-	P1IFG &= ~(BIT3);
+	//Initialize Button Stuff
+	P1DIR &= ~(B0 + B1);	// set buttons as output
+	P1IE |= (B0 + B1);		// interrupts enabled for btns
+	P1IES |= (B0 + B1);		// edge select hi -> low trigger
+	P1IFG &= ~(B0 + B1);	// clear flag bit for first use
 
 	//Initialize Ports
 	CSPort |= CS;		//Use bit to activate CE (active low) on the DAC(pin 2)
@@ -166,13 +178,18 @@ __interrupt void Timer_A(void) {
 		Drive_DAC(sqaure_val);
 		break;
 	case 1:
-		if (sin_pos + 1 > 49)
-			sin_pos = 0;
+		if (sin_pos + 1 > 49){
+			sin_pos = 0;	//reset so we can draw other half
+			count ^= 1;		//toggle which part we want to draw
+		}
 		else
 			sin_pos++;
 
-		//drive Dac with sine val
-		Drive_DAC(SIN_Values[sin_pos]);
+		//do first half of sine wave
+		if(count > 0 )
+			Drive_DAC(sine1[sin_pos]);
+		else
+			Drive_DAC(sine2[sin_pos]);
 		break;
 	case 2:
 		//sawtooth
@@ -195,14 +212,19 @@ void incrementState() {
 		state = 0;
 	else
 		state++;
+	//on state change - reset count
+	count = 0;
 }
 
 //Button push interrupt ISR
 #pragma vector=PORT1_VECTOR
 __interrupt void ISR_PORT1(void) {
 	if ((P1IFG & BIT3)== BIT3) {
-		incrementState();
 
+		incrementFrequency();
 		P1IFG &= ~BIT3;	//clear interrupt flag
+	} else if ((P1IFG & BIT2)== BIT2) {
+		incrementState();
+		P1IFG &= ~BIT2;	//clear interrupt flag
 	}
 }
