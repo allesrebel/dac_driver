@@ -8,11 +8,11 @@ Takes roughly 1.5us per call of drive_dac(), can't get any faster on 16Mhz clock
 
 #Function Generator Specs
 1.Shall have 3 waveforms
-..*Sqaure
-..*Sine
-..*Sawtooth
+  *Sqaure
+  *Sine
+  *Sawtooth
 All waveforms have 5 adjustable frequencies
-..*100, 200, 300, 400, 500
+  *100, 200, 300, 400, 500
 Sqaurewave is allowed to vary in duty cycle by 10% on button push
 
 ## Written by Alles Rebel and Evan Manrique
