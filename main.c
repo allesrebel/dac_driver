@@ -4,7 +4,10 @@
  * Project 2 for CPE 329
  *
  * Written By: Alles Rebel and Evan Manrique
- *	Version  : 0.9
+ *	Version  : 0.99
+ *
+ * Uses itoa function written by Pushpal Sidhu and Brandon Ivy
+ *
  * pinout :
  * MSP430
  *
@@ -30,6 +33,13 @@ void offSqaure();
 void incrementFrequency();
 void incrementState();
 void incrementDuty();
+
+//a lazy hack to get the frequency
+volatile char* getFreq();
+//a lazy way to get the duty cycle
+volatile char* getDuty();
+//a lazy way to (i think you should see a trend) the wave
+volatile char* getWave();
 
 /*
  * Pin configs - to make it easier to change if needed
@@ -70,6 +80,28 @@ volatile unsigned int sqaure_val = 0;
 volatile unsigned int saw_val = 0;
 volatile unsigned int samples = 0;
 volatile unsigned int duty = 50;
+// I'm so lazy
+volatile char s_sine[] = "Sin ";
+volatile char s_sqr[] = "Sqr ";
+volatile char s_saw[] = "Saw ";
+volatile char f_100[] = "100";
+volatile char f_200[] = "200";
+volatile char f_300[] = "300";
+volatile char f_400[] = "400";
+volatile char f_500[] = "500";
+volatile char d_0[] = "00";
+volatile char d_10[] = "10";
+volatile char d_20[] = "20";
+volatile char d_30[] = "30";
+volatile char d_40[] = "40";
+volatile char d_50[] = "50";
+volatile char d_60[] = "60";
+volatile char d_70[] = "70";
+volatile char d_80[] = "80";
+volatile char d_90[] = "90";
+#define 	  d_100 	f_100
+volatile int update = 1;
+
 /*
  * Calibration data for cycle counts of various frequencies
  */
@@ -103,7 +135,7 @@ int main(void) {
 
 	//initialize lcd stuff
 	//do a special init for 2.6 and 2.7
-	P2SEL  &= ~(BIT6 + BIT7);	// needs to be preped cause they aren't by default
+	P2SEL &= ~(BIT6 + BIT7);// needs to be preped cause they aren't by default
 	P2SEL2 &= ~(BIT6 + BIT7);
 	lcd_initialize();
 
@@ -132,7 +164,27 @@ int main(void) {
 	_enable_interrupts();
 
 	while (1) {
-		//setParameters(freqs[current_freq], 100, 50);
+		//display frequency,duty, etc if needed
+		if (update) {
+			//Frequency Display
+			lcd_wr_inst(0x80);	// sets cursor to the top left
+			__delay_cycles(4000); //allows cursor to move
+			lcd_send_string("Freq:");
+			lcd_send_string((char*) getFreq());
+			lcd_send_string("Hz");
+
+			lcd_wr_inst(0xC0);	// sets cursor to the top right
+			__delay_cycles(4000); //allows cursor to move
+			lcd_send_string("Wave:");
+			lcd_send_string((char*) getWave());
+
+			//display DC as well
+			lcd_send_string("@");
+			lcd_send_string((char*) getDuty());
+			lcd_send_string("%DC ");
+
+			update = 0;
+		}
 	}
 }
 
@@ -147,7 +199,7 @@ void Drive_DAC(unsigned int level) {
 	//Create the container for the total data that's going to be sent (16 bits total)
 	unsigned int DAC_Word = 0;	//default is DAC off
 	//check if level and duty is non-zero
-	if(level && duty)
+	if (level && duty)
 		DAC_Word = (0x1000) | (level & 0x0FFF); // 0x1000 sets DAC for Write
 
 	CSPOut &= ~CS; //Select the DAC
@@ -298,6 +350,62 @@ void incrementDuty() {
 		duty = 0;
 }
 
+volatile char* getFreq() {
+	switch (freqs[current_freq]) {
+	case 500:
+		return f_500;
+	case 400:
+		return f_400;
+	case 300:
+		return f_300;
+	case 200:
+		return f_200;
+	case 100:
+		return f_100;
+	}
+	return "Shouldn't ever get here";
+}
+
+volatile char* getWave() {
+	switch (state) {
+	case 0:
+		return s_sqr;
+	case 1:
+		return s_sine;
+	case 2:
+		return s_saw;
+	}
+	return "Shouldn't ever get here";
+}
+
+volatile char* getDuty() {
+	switch (duty) {
+	case 0:
+		return d_0;
+	case 10:
+		return d_10;
+	case 20:
+		return d_20;
+	case 30:
+		return d_30;
+	case 40:
+		return d_40;
+	case 50:
+		return d_50;
+	case 60:
+		return d_60;
+	case 70:
+		return d_70;
+	case 80:
+		return d_80;
+	case 90:
+		return d_90;
+	case 100:
+		return d_100;
+	}
+	return "Shouldn't ever get here";
+}
+
 //Button push interrupt ISR
 #pragma vector=PORT1_VECTOR
 __interrupt void ISR_PORT1(void) {
@@ -309,8 +417,10 @@ __interrupt void ISR_PORT1(void) {
 		P1IFG &= ~B1;	//clear interrupt flag
 	} else if ((P1IFG & B2)== B2) {
 		//only increment duty if on sqaure state
-		if(!state)
+		if (!state)
 			incrementDuty();
 		P1IFG &= ~B2;	//clear interrupt flag
 	}
+	//let main know we gotta update display
+	update = 1;
 }

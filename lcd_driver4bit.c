@@ -2,7 +2,7 @@
  * lcd_driver4bit.c
  * Library version of the 4bit LCD_driver written for
  * Microprocessor class.
- * 	   Version: 0.9
+ * 	   Version: 0.93
  *  Created on: May 1, 2014
  *     Authors: Rebel, Manrique
  */

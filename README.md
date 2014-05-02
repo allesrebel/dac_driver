@@ -19,6 +19,10 @@ Takes roughly 1.5us per call of drive_dac(), can't get any faster on 16Mhz clock
 Written for a microprocessor based design course at Calpoly San Luis Obispo
 
 ## Changelog 
+ * 5/1/2014 .99
+ 	* Added some lazy ways of converting ints to strings
+ 	* Some minor tweaks - cleaned up LCD library
+ 	* fixed some more minor bugs and comments
  * 5/1/2014 0.9
  	* Added in updated LCD library
  	* Added LCD into demo

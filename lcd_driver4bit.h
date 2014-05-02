@@ -2,7 +2,7 @@
  * lcd_driver4bit.h
  * Library version of the 4bit LCD_driver written for
  * Microprocessor class.
- * 	   Version: 0.9
+ * 	   Version: 0.93
  *  Created on: May 1, 2014
  *     Authors: Rebel, Manrique
  */
@@ -49,8 +49,6 @@ void lcd_initialize(void);
 void lcd_wr_inst(char inst);
 void lcd_wr_data(char data);
 void lcd_send_string(char* str);
-void lcd_move_cursor(void);
-void lcd_add_space(int num);
 
 //incomplete functions
 //Custom Characters Test Implementation
