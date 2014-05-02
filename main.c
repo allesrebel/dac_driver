@@ -1,6 +1,20 @@
+/*
+ * main.c - Function Generator Demo
+ * Uses MSP430G2553 for the controller and MCP4921 for the DAC
+ * Project 2 for CPE 329
+ *
+ * Written By: Alles Rebel and Evan Manrique
+ *	Version  : 0.9
+ * pinout :
+ * MSP430
+ *
+ */
 #include <msp430.h> 
-//#include "lcd_driver4bit.h"
+#include "lcd_driver4bit.h"
 
+/*
+ * DAC related Functions
+ */
 void Drive_DAC(unsigned int level);
 void setParameters(int freq, int sample);
 void initTimer();
@@ -86,6 +100,12 @@ int main(void) {
 	DCOCTL = 0;
 	BCSCTL1 = CALBC1_16MHZ;	// Set range
 	DCOCTL = CALDCO_16MHZ;	// Set DCO step + modulation
+
+	//initialize lcd stuff
+	//do a special init for 2.6 and 2.7
+	P2SEL  &= ~(BIT6 + BIT7);	// needs to be preped cause they aren't by default
+	P2SEL2 &= ~(BIT6 + BIT7);
+	lcd_initialize();
 
 	//Initialize Button Stuff
 	P1DIR &= ~(B0 + B1 + B2);	// set buttons as output

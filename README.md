@@ -17,3 +17,8 @@ Takes roughly 1.5us per call of drive_dac(), can't get any faster on 16Mhz clock
 
 ## Written by Alles Rebel and Evan Manrique
 Written for a microprocessor based design course at Calpoly San Luis Obispo
+
+## Changelog 
+ * 5/1/2014 0.9
+ 	* Added in updated LCD library
+ 	* Added LCD into demo

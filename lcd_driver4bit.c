@@ -2,6 +2,7 @@
  * lcd_driver4bit.c
  * Library version of the 4bit LCD_driver written for
  * Microprocessor class.
+ * 	   Version: 0.9
  *  Created on: May 1, 2014
  *     Authors: Rebel, Manrique
  */
@@ -25,15 +26,35 @@ void lcd_wr_inst(char inst) {
 }
 
 /*
- * Nibble Functions - just makes it clear we're getting nibbles
- * From various bytes.
+ * Translation Functions -
+ * Converts a command into databus compatiable signals
+ * eg if 0x20 was given this function will take 2
+ * 	and convert 0 0 1 0 -> D7 D6 D5 D4 with all other bits 0
+ * 	regardless of where the db actually lies in terms of ports
  */
 char HI_NIBBLE(char nib) {
-	return ((nib) & 0xF0);
-}
+	//grab the top nibble
+	char preMap = ((nib) & 0xF0);
+	//output starts at 0
+	char result = 0;
 
+	//now bit Checkin Time!
+	//is bit& of preMap a 1?
+	if(preMap & BIT7)
+		result |= D7;	//add D7 to data out
+	if(preMap & BIT6)
+		result |= D6;
+	if(preMap & BIT5)
+		result |= D5;
+	if(preMap & BIT4)
+		result |= D4;
+
+	//spit out the result
+	return result;
+}
+//Take advantage of our earlier code
 char LO_NIBBLE(char nib) {
-	return ((nib << 4) & 0xF0);
+	return HI_NIBBLE(nib << 4);
 }
 
 /*
@@ -42,6 +63,7 @@ char LO_NIBBLE(char nib) {
  * 	char data	- character containing the data to be written (note endian MSB -> LSB)
  * 	char pins	- which pins will be written to only (1 means write)
  * 	void* port	- the port the data will be written to
+  * TODO: Parhaps make the inputs all port generic as well...
  */
 void sendToPort(char data, char pins, volatile unsigned char* port) {
 	// filter out values that don't have pins associated with them
