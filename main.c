@@ -106,7 +106,7 @@ volatile int update = 1;
  * Calibration data for cycle counts of various frequencies
  */
 //Data for 100 samples for the whole period
-volatile unsigned int cali100Samples[5] = { 1600, 800, 533, 400, 320 };
+volatile unsigned int cali100Samples[5] = { 1580, 790, 526, 393, 315 };
 
 //First half of sine wave (only 50 samples for first half of period)
 volatile unsigned int sine1_50Samples[50] = { 1024, 1088, 1152, 1215, 1278,
@@ -315,7 +315,7 @@ __interrupt void Timer_A(void) {
 			saw_val = 0;
 			count = 0;
 		} else {
-			saw_val += 20;
+			saw_val += 21;
 		}
 		count++;
 
